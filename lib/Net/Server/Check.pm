@@ -56,16 +56,16 @@ sub single_check {
     my $final_result = "Finished: \n";
 
     foreach my $port (@port) {
+	if ($port =~ m/[a-zA-Z]+/){ 
+	    $final_result = $final_result . "$port - Skiped - port is not digits\n"; 
+	    next;
+	}
+
 	if (($port > 65535) or ($port < 0)){ 
-	    $final_result = $final_result . "$port - Skiped - port is on not port range\n"; 
+	    $final_result = $final_result . "$port - Skiped - port is on not in port range: 0-65535!\n"; 
 	    next;
 	}
 	
-#	if ($port =~ /.+w\/){ 
-#	    $final_result = $final_result . "$port - Skiped - port is not digits\n"; 
-#	    next;
-#	}
-
         my $result = system ("nc -z -w 5 -v $client_ip $port");
 
     	if ($result eq "0" ){		
