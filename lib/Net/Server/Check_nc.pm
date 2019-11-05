@@ -12,17 +12,22 @@ use IO::Socket::PortState qw(check_ports);
 
 my $debug = 1;
 my $timeout = 5;
-my $default_ports = "25 110 80 8080";
+my $default_ports = "25 110 80 443 3306 5666";
 
-sub process_request {   # Собственно, здесь и выполняется вся работа с запросом
-    my $self = shift;    # Получаем ссылку на себя. Это Perl ООП-магия
+sub process_request {	# Собственно, здесь и выполняется вся работа с запросом
+    my $self = shift;   # Получаем ссылку на себя.
     my $client_ip = $self->{server}{peeraddr};
     say "You IP : $client_ip";
 
 #    p $client_ip;
-#    say "You'r Network Info $client_ip";
+    my $usage = "Enter command: 
+		    port - Checks one or few specified port. Use space separator.
+		    scan - Checks default ports: 25,110,80,443 3306 5666.";
 
+    say $usage;
+    print "command: ";
    while (<STDIN>) {    # Net::Server дает нам сокет как STDIN + STDOUT!
+	
 	#убираем переводы строк
 	s/[\r\n]+$//;
 
@@ -33,16 +38,15 @@ sub process_request {   # Собственно, здесь и выполняет
 	    &scan_check($client_ip,$default_ports);
 
 	}elsif ($command eq "port"){
-	    say "You run command = port. Please enter port for check";
+	    say "Please enter port for check:";
 
 	    my $port = <STDIN>; s/[\r\n]+$//;
 	    &single_check($client_ip,$port);
 
 	}else{
 	    # На любую не коорректную ошибку выдаём подсказку.
-    	    say "Enter command: 
-		    port - Checks one or few specified port. Use space separator.
-		    scan - Checks default ports: 25,110,80,443."; 
+	    say $usage;
+	    print "command: ";
 	}
         last if /quit/i;
    }
@@ -56,7 +60,16 @@ sub single_check {
     my $final_result = "Finished: \n";
 
     foreach my $port (@port) {
-	say "CHecked - $port - timeout 5 sec";
+	if ($port =~ m/[a-zA-Z]+/){ 
+	    $final_result = $final_result . "$port - Skiped - port is not digits\n"; 
+	    next;
+	}
+
+	if (($port > 65535) or ($port < 0)){ 
+	    $final_result = $final_result . "$port - Skiped - port is on not in port range: 0-65535!\n"; 
+	    next;
+	}
+	
         my $result = system ("nc -z -w 5 -v $client_ip $port");
 
     	if ($result eq "0" ){		
@@ -66,6 +79,7 @@ sub single_check {
 	}
     }
 	say $final_result;
+        print "command: ";
 	return;
 }
 
@@ -79,7 +93,7 @@ sub scan_check {
     my $final_result = "Finished: \n";
 
     foreach my $port (@port) {
-	say "CHecked - $port - timeout 5 sec";
+
         my $result = system ("nc -z -w 5 -v $client_ip $port");
 
     	if ($result eq "0" ){		
@@ -89,6 +103,7 @@ sub scan_check {
 	}
     }
 	say $final_result;
+        print "command: ";
 	return;
 }
 
