@@ -43,12 +43,14 @@ sub process_request {	# Собственно, здесь и выполняетс
 	    my $port = <STDIN>; s/[\r\n]+$//;
 	    &single_check($client_ip,$port);
 
+	}elsif (($command eq "exit")or ($command eq "quit")){
+	    say "Bye-bye!"; exit;
 	}else{
 	    # На любую не коорректную ошибку выдаём подсказку.
 	    say $usage;
 	    print "command: ";
 	}
-        last if /quit/i;
+        last if /quit|exit/i;
    }
 }
 
@@ -57,10 +59,13 @@ sub single_check {
     my $ports = shift; s/[\r\n]+$//;
     my @port = split(" ",$ports); p @port;
 
-    my $final_result = "Finished: \n";
+    my $final_result = "\n"."Finished:"."\n";
+    my $opened_ports = "\n"."Opened ports:"."\n";
+    my $closed_ports = "Closed ports:\n";
 
     foreach my $port (@port) {
-	if ($port =~ m/[a-zA-Z]+/){ 
+
+	if ($port =~ m/[a-zA-Z_\!\#\%\$\@]+/){ 
 	    $final_result = $final_result . "$port - Skiped - port is not digits\n"; 
 	    next;
 	}
@@ -73,14 +78,16 @@ sub single_check {
         my $result = system ("nc -z -w 5 -v $client_ip $port");
 
     	if ($result eq "0" ){		
-	    $final_result = $final_result . "$port - Port opened\n";
+	    $opened_ports = $opened_ports . "$port - Port opened\n";
 	}else {
-	    $final_result = $final_result . "$port - Port Closed/Filtered \n";
+	    $closed_ports = $closed_ports . "$port - Port Closed/Filtered \n";
 	}
     }
-	say $final_result;
-        print "command: ";
-	return;
+
+    $final_result = $final_result . $opened_ports . "\n" . $closed_ports;
+    say $final_result;
+    print "command: ";
+    return;
 }
 
 
@@ -90,22 +97,23 @@ sub scan_check {
     my @port = split(" ",$ports); p @port;
 
 #    p @port;
-    my $final_result = "Finished: \n";
-
+    my $final_result = "\n"."Finished:"."\n";
+    my $opened_ports = "\n"."Opened ports:"."\n";
+    my $closed_ports = "Closed ports: \n";
     foreach my $port (@port) {
 
         my $result = system ("nc -z -w 5 -v $client_ip $port");
 
     	if ($result eq "0" ){		
-	    $final_result = $final_result . "$port - Port opened\n";
+	    $opened_ports = $opened_ports . "$port - Port opened\n";
 	}else {
-	    $final_result = $final_result . "$port - Port Closed/Filtered \n";
+	    $closed_ports = $closed_ports . "$port - Port Closed/Filtered \n";
 	}
     }
+	$final_result = $final_result . $opened_ports . "\n" . $closed_ports;
 	say $final_result;
         print "command: ";
 	return;
 }
 
-
-1; # Perl-магия: пакет должен иметь return
+1; 
