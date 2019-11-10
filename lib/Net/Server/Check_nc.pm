@@ -5,10 +5,9 @@ package Net::Server::Check; # Объявляем свой пакет
 use feature(say);
 use strict; 
 use warnings;
-use DDP;
+#use DDP;
 
 use base qw(Net::Server::PreFork); # Наследуем
-use IO::Socket::PortState qw(check_ports);
 
 my $debug = 1;
 my $timeout = 5;

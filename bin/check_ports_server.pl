@@ -12,6 +12,6 @@ use lib "$FindBin::Bin/../lib";
 
 use Net::Server::Check;
 
-our $server = Net::Server::Check->new(conf_file => "$FindBin::Bin/../etc/myserver.cfg");
+our $server = Net::Server::Check->new(conf_file => "$FindBin::Bin/../etc/checkserver.cfg");
 
 $server->run();

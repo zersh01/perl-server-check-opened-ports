@@ -5,12 +5,12 @@ package Net::Server::Check; # Объявляем свой пакет
 use feature(say);
 use strict; 
 use warnings;
-use DDP;
+#use DDP;
 
 use base qw(Net::Server::PreFork); # Наследуем
 use IO::Socket::PortState qw(check_ports);
 
-my $debug = 1;
+my $debug = 0;
 my $timeout = 5;
 my $default_ports = "25 110 80 443 3306 5666";
 
@@ -22,7 +22,8 @@ sub process_request {	# Собственно, здесь и выполняетс
 #    p $client_ip;
     my $usage = "Enter command: 
 		    port - Checks one or few specified port. Use space separator.
-		    scan - Checks default ports: 25,110,80,443 3306 5666.";
+		    scan - Checks default ports: 25,110,80,443 3306 5666.
+		    exit/quit - close connection";
 
     say $usage;
     print "command: ";
@@ -34,7 +35,7 @@ sub process_request {	# Собственно, здесь и выполняетс
 	my $command = $_; 
 
 	if ("$command" eq "scan"){
-	    say "Scaned";
+	    say "Scaned"; sleep 1;
 	    &scan_check($client_ip,$default_ports);
 
 	}elsif ($command eq "port"){
@@ -57,13 +58,17 @@ sub process_request {	# Собственно, здесь и выполняетс
 sub single_check {
     my $client_ip = shift; s/[\r\n]+$//;
     my $ports = shift; s/[\r\n]+$//;
-    my @port = split(" ",$ports); p @port;
+    my %port_hash;
+
+    foreach (split(" ",$ports)){
+	$port_hash{tcp}{$_} = undef;
+    }
 
     my $final_result = "\n"."Finished:"."\n";
     my $opened_ports = "\n"."Opened ports:"."\n";
     my $closed_ports = "Closed ports:\n";
 
-    foreach my $port (@port) {
+    foreach my $port (keys %{$port_hash{tcp}}) {
 
 	if ($port =~ m/[a-zA-Z_\!\#\%\$\@]+/){ 
 	    $final_result = $final_result . "$port - Skiped - port is not digits\n"; 
@@ -75,9 +80,10 @@ sub single_check {
 	    next;
 	}
 	
-        my $result = system ("nc -z -w 5 -v $client_ip $port");
+        my $check = check_ports($client_ip,$timeout,\%port_hash);
+	my $result = $check->{tcp}{$port}{open} ? 'yes' : 'no';
 
-    	if ($result eq "0" ){		
+    	if ($result eq "yes" ){		
 	    $opened_ports = $opened_ports . "$port - Port opened\n";
 	}else {
 	    $closed_ports = $closed_ports . "$port - Port Closed/Filtered \n";
@@ -94,17 +100,25 @@ sub single_check {
 sub scan_check {
     my $client_ip = shift; s/[\r\n]+$//;
     my $ports = shift; s/[\r\n]+$//;
-    my @port = split(" ",$ports); p @port;
+    my %port_hash;
 
+    foreach (split(" ",$ports)){
+	$port_hash{tcp}{$_} = undef;
+    }
+
+#    p %port_hash;
 #    p @port;
+
     my $final_result = "\n"."Finished:"."\n";
     my $opened_ports = "\n"."Opened ports:"."\n";
     my $closed_ports = "Closed ports: \n";
-    foreach my $port (@port) {
 
-        my $result = system ("nc -z -w 5 -v $client_ip $port");
+    foreach my $port (keys %{$port_hash{tcp}}) {
 
-    	if ($result eq "0" ){		
+        my $check = check_ports($client_ip,$timeout,\%port_hash);
+	my $result = $check->{tcp}{$port}{open} ? 'yes' : 'no';
+
+    	if ($result eq "yes" ){		
 	    $opened_ports = $opened_ports . "$port - Port opened\n";
 	}else {
 	    $closed_ports = $closed_ports . "$port - Port Closed/Filtered \n";
