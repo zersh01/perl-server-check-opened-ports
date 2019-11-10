@@ -10,11 +10,16 @@ Edit /etc/ckeckserver.cfg to configure server
 
 Run on server bin/check_ports_server.pl
 
-Connect from client (telnet or nc):
+Connect from client (telnet or nc - default port 9999):
+
+**telnet server_ip 9999**
 
 Enter command: 
- port - Checks one or few specified port. Use space separator.
- scan - Checks default ports: 25,110,80,443 3306 5666.
- exit/quit - close connection
+
+**port** - Checks one or few specified port. Use space separator.
+  
+**scan** - Checks default ports: 25,110,80,443 3306 5666.
+
+**exit/quit** - close connection
 
 
